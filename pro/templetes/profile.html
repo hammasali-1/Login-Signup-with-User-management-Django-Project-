@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profile</title>
+    </div>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--radius:1rem}
+        body{opacity:0;animation:fadeIn .15s ease forwards}
+        @keyframes fadeIn{to{opacity:1}}
+        body::before{content:"";position:fixed;inset:-15% -10%;z-index:-1;filter:blur(45px);
+            background: radial-gradient(40% 40% at 10% 20%, rgba(99,102,241,.25) 0%, transparent 60%),
+                        radial-gradient(40% 40% at 90% 10%, rgba(34,211,238,.25) 0%, transparent 60%);
+            animation: floatBg 14s ease-in-out infinite alternate}
+        @keyframes floatBg{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,-6%,0)}}
+        .navbar{backdrop-filter:blur(6px)}
+        .card{border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.08)}
+        .glass{background:rgba(255,255,255,.75)}
+        [data-bs-theme="dark"] .glass{background:rgba(25,25,28,.55)}
+        .avatar{width:96px;height:96px;border-radius:999px;background:linear-gradient(135deg, #6366f1, #22d3ee);display:grid;place-items:center;color:#fff;font-weight:700}
+        .chip{border-radius:999px;border:1px solid rgba(0,0,0,.08);padding:.35rem .7rem}
+        [data-bs-theme="dark"] .chip{border-color:rgba(255,255,255,.12)}
+        #pageLoader{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.06);z-index:9999}
+        .show-loader #pageLoader{display:grid}
+        .modal-backdrop{backdrop-filter:blur(8px)}
+        @media (max-width: 576px){
+            .avatar{width:72px;height:72px}
+            #avatarPreview{width:220px;height:220px}
+            .btn-fluid-sm{width:100%}
+        }
+    </style>
+ </head>
+ <body style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+    {% include 'partials/navbar.html' %}
+    <div id="spa-content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="card glass p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
+                        {% if user.profile_image %}
+                        <img class="avatar" src="{{ user.profile_image.url }}" alt="Avatar" style="object-fit:cover" id="avatarThumb" />
+                        {% else %}
+                        <div class="avatar" id="avatarThumb">{{ user.username|slice:":1"|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <h1 class="h3 mb-1">{{ user.username }}</h1>
+                            <div class="text-secondary">{{ user.email }}</div>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="chip text-capitalize">{{ user.role }}</span>
+                        </div>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6">
+                            <div class="p-4 border rounded-3">
+                                <div class="text-secondary">Account</div>
+                                <div class="mt-2">Status: {{ user.is_active|yesno:"Active,Inactive" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="p-4 border rounded-3">
+                                <div class="text-secondary">Security</div>
+                                <div class="mt-2">Password set</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 border rounded-3">
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <form method="post" action="{% url 'upload_profile_image' %}" enctype="multipart/form-data" class="d-flex align-items-center gap-3 flex-column flex-md-row">
+                                {% csrf_token %}
+                                <input type="file" name="image" accept="image/*" class="form-control" style="max-width:360px" required />
+                                <button type="submit" class="btn btn-primary btn-fluid-sm">Upload image</button>
+                            </form>
+                            {% if user.profile_image %}
+                            <form method="post" action="{% url 'delete_profile_image' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-light btn-fluid-sm">Remove image</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if pw_error %}
+                    <div class="alert alert-danger mb-3" role="alert">{{ pw_error }}</div>
+                    {% endif %}
+                    {% if pw_success %}
+                    <div class="alert alert-success mb-3" role="alert">{{ pw_success }}</div>
+                    {% endif %}
+                    <div class="mt-4 d-flex gap-2 flex-wrap">
+                        {% if user.role != 'user' %}
+                        <a href="{% url 'myfile' %}" class="btn btn-light">Dashboard</a>
+                        {% endif %}
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change password</button>
+                        <form method="post" action="{% url 'delete_account' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger" {% if user.role != 'user' %}disabled title="Only users can delete their own account"{% endif %}>{% if user.role != 'user' %}🔒 {% endif %}Delete account</button>
+                        </form>
+                        <a href="{% url 'logout' %}" class="btn btn-primary">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="pageLoader"><div class="spinner-border text-primary" role="status" aria-label="Loading"></div></div>
+    <div id="avatarOverlay" style="position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.25);backdrop-filter:blur(6px);z-index:9999">
+        <div id="avatarPreview" style="width:280px;height:280px;border-radius:999px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.25);transform:scale(.92);transition:transform .2s ease">
+            {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="Large avatar" style="width:100%;height:100%;object-fit:cover" />
+            {% else %}
+            <div style="width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(135deg,#6366f1,#22d3ee);color:#fff;font-size:6rem;font-weight:800">{{ user.username|slice:":1"|upper }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'change_password' %}">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label" for="old_pw">Old password</label>
+                            <input id="old_pw" name="Old" type="password" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="new_pw">New password</label>
+                            <input id="new_pw" name="New" type="password" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="conf_pw">Confirm password</label>
+                            <input id="conf_pw" name="Confirm" type="password" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            var loader=document.getElementById('pageLoader');
+            var overlay=document.getElementById('avatarOverlay');
+            var preview=document.getElementById('avatarPreview');
+            var thumb=document.getElementById('avatarThumb');
+            function showOverlay(){overlay.style.display='grid';setTimeout(function(){preview.style.transform='scale(1)'},10)}
+            function hideOverlay(){preview.style.transform='scale(.92)';overlay.style.display='none'}
+            if(thumb){thumb.addEventListener('click',showOverlay)}
+            overlay.addEventListener('click',function(e){ if(e.target===overlay){ hideOverlay() } })
+            window.addEventListener('keydown',function(e){ if(e.key==='Escape'){ hideOverlay() } })
+            function show(){document.body.classList.add('show-loader')}
+            document.querySelectorAll('a').forEach(function(a){a.addEventListener('click',show)});
+            function hide(){document.body.classList.remove('show-loader')}
+            hide();
+            window.addEventListener('load', hide);
+            window.addEventListener('pageshow', hide);
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+ </body>
+ </html>

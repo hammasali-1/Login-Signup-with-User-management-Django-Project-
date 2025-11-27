@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contact Us</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <style>:root{--radius:.9rem}.card{border-radius:var(--radius)}</style>
+</head>
+<body style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">
+    {% include 'partials/navbar.html' %}
+    <div id="spa-content">
+    <div class="container py-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+        {% endfor %}
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <div class="card p-4">
+                    <h2 class="h5">Contact Information</h2>
+                    <div class="mt-2">Email: {{ site.contact_email|default:'-' }}</div>
+                    <div class="mt-2">Phone: {{ site.contact_phone|default:'-' }}</div>
+                    <div class="mt-2">Address: {{ site.contact_address|default:'-' }}</div>
+                    <div class="mt-2">{{ site.contact_description|default:'' }}</div>
+                    {% if current_user and current_user.role == 'admin' %}
+                    <button class="btn btn-light mt-3" data-bs-toggle="collapse" data-bs-target="#editContact">Edit</button>
+                    <div id="editContact" class="collapse mt-3">
+                        <form method="post" action="{% url 'edit_contact' %}">
+                            {% csrf_token %}
+                            <div class="mb-2"><label class="form-label">Email</label><input class="form-control" name="email" value="{{ site.contact_email }}"></div>
+                            <div class="mb-2"><label class="form-label">Phone</label><input class="form-control" name="phone" value="{{ site.contact_phone }}"></div>
+                            <div class="mb-2"><label class="form-label">Address</label><input class="form-control" name="address" value="{{ site.contact_address }}"></div>
+                            <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" name="description">{{ site.contact_description }}</textarea></div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn btn-light" data-bs-toggle="collapse" data-bs-target="#editContact">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="card p-4">
+                    <h2 class="h5">Send us a message</h2>
+                    {% if current_user %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="send">
+                        <div class="mb-3"><input type="text" name="subject" class="form-control" placeholder="Subject"></div>
+                        <div class="mb-3"><textarea name="message" class="form-control" rows="5" placeholder="Write your message" required></textarea></div>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Login to send message</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

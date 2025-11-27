@@ -1,0 +1,154 @@
+<style>
+    .navbar{backdrop-filter:blur(6px);position:relative;z-index:6000}
+    .brand{font-weight:700}
+    .nav-pills .nav-link{border-radius:999px;position:relative;transition:color .2s ease, background .2s ease, transform .15s ease, box-shadow .2s ease}
+    .nav-pills .nav-link:hover{background:linear-gradient(90deg,#22d3ee1a,#6366f11a);transform:translateY(-1px);box-shadow:0 8px 18px rgba(99,102,241,.2)}
+    .nav-pills .nav-link.active{color:#fff;background:linear-gradient(90deg,#22d3ee,#6366f1);box-shadow:0 12px 24px rgba(99,102,241,.35)}
+    [data-bs-theme="dark"] .nav-pills .nav-link.active{box-shadow:0 12px 24px rgba(99,102,241,.55)}
+    .nav-pills .nav-link::after{content:"";position:absolute;left:16px;right:16px;bottom:-4px;height:2px;border-radius:999px;background:transparent;transform:scaleX(0);transition:transform .2s ease, background .2s ease}
+    .nav-pills .nav-link:hover::after{background:linear-gradient(90deg,#22d3ee,#6366f1);transform:scaleX(1)}
+    .avatar{width:36px;height:36px;border-radius:999px;background:linear-gradient(135deg,#6366f1,#22d3ee);display:grid;place-items:center;color:#fff;font-weight:700}
+    .avatar-btn{display:flex;align-items:center;gap:.6rem;border:1px solid rgba(0,0,0,.08);border-radius:999px;background:rgba(255,255,255,.7);padding:.25rem .6rem}
+    [data-bs-theme="dark"] .avatar-btn{border-color:rgba(255,255,255,.12);background:rgba(25,25,28,.55)}
+    .username{font-weight:600}
+    .dropdown-menu{min-width:160px;z-index:10000}
+    #spaLoader{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.06);z-index:9999}
+    .show-loader #spaLoader{display:grid}
+    body::before{content:"";position:fixed;inset:-15% -10%;z-index:-1;filter:blur(45px);
+        background: radial-gradient(40% 40% at 10% 20%, rgba(99,102,241,.25) 0%, transparent 60%),
+                    radial-gradient(40% 40% at 90% 10%, rgba(34,211,238,.25) 0%, transparent 60%);
+        animation: floatBg 14s ease-in-out infinite alternate}
+    @keyframes floatBg{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,-6%,0)}}
+    [data-bs-theme="dark"] body::before{background: radial-gradient(40% 40% at 10% 20%, rgba(99,102,241,.35) 0%, transparent 60%),
+                    radial-gradient(40% 40% at 90% 10%, rgba(34,211,238,.35) 0%, transparent 60%)}
+    @media (max-width: 576px){
+        .navbar .nav{gap:.25rem!important}
+        .nav-pills .nav-link{padding:.375rem .75rem;font-size:.875rem}
+        .brand{font-size:1rem}
+        .dropdown-menu{position:fixed;left:.75rem;right:.75rem;top:60px;border-radius:.75rem}
+    }
+</style>
+<nav id="global-navbar" class="navbar navbar-expand-md border-bottom">
+    <div class="container">
+        <a class="navbar-brand brand" data-spa="true" href="{% if current_user %}{% url 'myfile' %}{% else %}{% url 'index' %}{% endif %}">Customer Portal</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navCollapse">☰</button>
+        <div class="collapse navbar-collapse" id="navCollapse">
+            <ul class="navbar-nav mx-auto nav nav-pills gap-1 justify-content-center">
+                {% if current_user %}
+                    {% if current_user.role == 'admin' or current_user.role == 'manager' %}
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'myfile' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'inbox' %}">Inbox</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'contact' %}">Contact Us</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'about' %}">About Us</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'contact' %}">Contact Us</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'about' %}">About Us</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'index' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'contact' %}">Contact Us</a></li>
+                    <li class="nav-item"><a class="nav-link" data-spa="true" href="{% url 'about' %}">About Us</a></li>
+                {% endif %}
+            </ul>
+            <div class="d-flex align-items-center gap-2">
+                {% if current_user %}
+                {% with u=current_user %}
+                <div class="dropdown">
+                    <button id="profileBtn" class="avatar-btn" type="button">
+                        {% if u.profile_image %}
+                        <img class="avatar" src="{{ u.profile_image.url }}" alt="Avatar" style="object-fit:cover" />
+                        {% else %}
+                        <span class="avatar">{% if u.username %}{{ u.username|slice:":1"|upper }}{% else %}{{ u.email|slice:":1"|upper }}{% endif %}</span>
+                        {% endif %}
+                        <span class="username">{% if u.username %}{{ u.username }}{% else %}{{ u.email }}{% endif %}</span>
+                    </button>
+                    <ul id="profileMenu" class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" data-spa="true" href="{% url 'profile' %}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                    </ul>
+                </div>
+                {% endwith %}
+                {% else %}
+                <a class="btn btn-link" data-spa="true" href="{% url 'login' %}">Login</a>
+                <a class="btn btn-link" data-spa="true" href="{% url 'signup' %}">Signup</a>
+                {% endif %}
+                <button id="themeToggle" class="btn btn-light">🌙 Dark</button>
+            </div>
+        </div>
+    </div>
+</nav>
+<div id="spaLoader"><div class="spinner-border text-primary" role="status" aria-label="Loading"></div></div>
+<script>
+    (function(){
+        var nav=document.getElementById('global-navbar');
+        var menu=document.getElementById('profileMenu');
+        var btn=document.getElementById('profileBtn');
+        var toggle=document.getElementById('themeToggle');
+        var initialTheme = "{% if current_user %}{{ current_user.theme }}{% endif %}";
+        function getCookie(name){var v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');return v? v.pop():''}
+        function setTheme(t){document.documentElement.setAttribute('data-bs-theme',t)}
+        (function initTheme(){
+            var t = initialTheme || localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+            setTheme(t);
+            if(toggle) toggle.textContent=t==='dark'? '☀️ Light' : '🌙 Dark';
+        })();
+        function setActive(){
+            var p=location.pathname;
+            nav.querySelectorAll('.nav-link').forEach(function(a){
+                try{var u=new URL(a.href,location.origin);a.classList.toggle('active',u.pathname===p)}catch(e){}
+            });
+        }
+        function showLoader(on){
+            document.body.classList.toggle('show-loader',!!on);
+        }
+        function runInlineInit(root){
+            root.querySelectorAll('script[data-spa-init]').forEach(function(sc){
+                try{ (0,eval)(sc.textContent); }catch(e){}
+            });
+        }
+        function load(url,replace){
+            showLoader(true);
+            fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.text()}).then(function(html){
+                var doc=new DOMParser().parseFromString(html,'text/html');
+                var next=doc.getElementById('spa-content');
+                var cur=document.getElementById('spa-content');
+                if(next&&cur){
+                    cur.innerHTML=next.innerHTML;
+                    runInlineInit(cur);
+                }
+                if(!replace) history.pushState({},'',url);
+                setActive();
+                document.dispatchEvent(new CustomEvent('spa:loaded',{detail:{url:url}}));
+            }).catch(function(){location.href=url}).finally(function(){showLoader(false)});
+        }
+        if(btn&&menu){
+            btn.addEventListener('click',function(){menu.classList.toggle('show')});
+            document.addEventListener('click',function(e){if(!nav.contains(e.target))menu.classList.remove('show')});
+        }
+        nav.addEventListener('click',function(e){
+            var a=e.target.closest('a');
+            if(!a) return;
+            if(a.getAttribute('data-spa')==='true'){
+                e.preventDefault();
+                var href=a.getAttribute('href');
+                load(href,false);
+            }
+        });
+        function saveTheme(t){
+            localStorage.setItem('theme',t);
+            {% if current_user %}
+            fetch("{% url 'set_theme' %}",{method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')}, body:new URLSearchParams({theme:t})}).catch(function(){})
+            {% endif %}
+        }
+        if(toggle){
+            toggle.addEventListener('click',function(){
+                var t=document.documentElement.getAttribute('data-bs-theme')==='dark'? 'light':'dark';
+                setTheme(t);
+                saveTheme(t);
+                toggle.textContent=t==='dark'? '☀️ Light' : '🌙 Dark';
+            });
+        }
+        window.addEventListener('popstate',function(){load(location.href,true)});
+        setActive();
+    })();
+</script>
